@@ -2,29 +2,69 @@
   'use strict';
 
   window.app.init(function(controller) {
-    controller.setTransistionInterval(1000);
+    var transitionTime = 3000;
+
+    controller.setTransitionActionFactory({
+      transitionTime: transitionTime,
+      create: function() { return new SlidingInterpolateAction(transitionTime) }
+    });
 
     controller.pushAction(
+      new NullAction(),
+      5000
+    );
+    controller.pushAction(
       new DigitalClockAction(),
-      30000
+      15000
     );
     controller.pushAction(
       new FieldLinesAction(10),
-      3000
+      10000
     );
     controller.pushAction(
       new RandomizeAction(),
-      3000
+      5000
     ),
     controller.pushAction(
       new FieldLinesAction(10),
-      3000
+      15000
     );
-    controller.pushAction(
+    /*controller.pushAction(
       new AnalogClockAction(),
       3000
-    );
+    );*/
   });
+
+  function SlidingInterpolateAction(transitionTime) {
+    var fromAction, toAction, startTime, endTime;
+
+    function interpolate(from, to, fraction) {
+      if(from === null) return null;
+      var diff = to - from;
+      return to - (diff - (diff * fraction));
+    }
+
+    this.initTransition = function(_fromAction, _toAction, _startTime) {
+      fromAction = _fromAction;
+      toAction = _toAction;
+      startTime = _startTime;
+      endTime = startTime + transitionTime;
+    }
+
+    this.getPos = function(timestamp, x, y) {
+      var fromPos = fromAction.getPos(startTime, x, y);
+      var toPos = toAction.getPos(endTime, x, y);
+      var fraction = (timestamp-startTime)/transitionTime;
+
+      var pos = {
+        hour: interpolate(fromPos.hour, toPos.hour, fraction),
+        minute: interpolate(fromPos.minute, toPos.minute, fraction),
+        second: interpolate(fromPos.second, toPos.second, fraction)
+      };
+
+      return pos;
+    }
+  }
 
   function DigitalClockAction() {
     var timestamp;
@@ -211,6 +251,16 @@
         }
       }
       return p[x][y];
+    }
+  }
+
+  function NullAction() {
+    this.getPos = function(timestamp, x, y) {
+      return {
+        hour: x==23?270:90,
+        minute: x==0?90:270,
+        second: null
+      }
     }
   }
 

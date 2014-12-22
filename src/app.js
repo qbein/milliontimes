@@ -1,27 +1,10 @@
 (function(document, window) {
   'use strict';
 
-  function InterpolatorAction(fromAction, toAction, interval) {
-    var startTime = new Date().getTime();
-
-    this.getPos = function(timestamp, x, y) {
-      var fromPos = fromAction.getPos(timestamp, x, y);
-      var toPos = toAction.getPos(timestamp, x, y);
-      var fraction = (timestamp-startTime)/interval;
-
-      // How to calculate position???
-      if(toPos.ccw) {
-
-      }
-
-      return fromPos;
-    }
-  }
-
   function ClockController() {
     var actions = [],
         clocks = [],
-        transitionInterval,
+        transitionActionFactory,
         actionIdx = 0,
         currentAction,
         transitioning,
@@ -34,7 +17,8 @@
     }
 
     function getCurrentAction() {
-      var now = new Date();
+      var now = new Date(),
+          transitionTime = transitionActionFactory.transitionTime;
 
       if(actions.length > 0) {
         if(!startTime) {
@@ -50,11 +34,12 @@
           }
           // Start transition to next action
           else if(!transitioning
-            && now.getTime() > startTime+actions[actionIdx].duration-transitionInterval) {
+            && now.getTime() > startTime+actions[actionIdx].duration-transitionTime) {
             var fromAction = actions[actionIdx].action;
             var toAction = actions[(actionIdx + 1) % actions.length].action;
             initAction(toAction);
-            currentAction = new InterpolatorAction(fromAction, toAction, transitionInterval);
+            currentAction = transitionActionFactory.create();
+            currentAction.initTransition(fromAction, toAction, now.getTime());
             transitioning = true;
           }
         }
@@ -72,8 +57,8 @@
       actions.push({ duration: duration, action: action });
     }
 
-    this.setTransistionInterval = function(millis) {
-      transitionInterval = millis;
+    this.setTransitionActionFactory = function(actionFactory) {
+      transitionActionFactory = actionFactory;
     }
 
     this.clearActions = function() {
@@ -107,6 +92,7 @@
         initFunc,
         width,
         height,
+        stopped,
         controller = new ClockController(),
         scaleFactor = getBackingScale(canvas.getContext('2d'));
 
@@ -167,12 +153,12 @@
     }
 
     function delay(callback) {
-      setTimeout(function() {
+      /*setTimeout(function() {
         callback();
-      }, 100);
-      /*window.requestAnimationFrame(function() {
-        callback();
-      });*/
+      }, 100);*/
+      window.requestAnimationFrame(function(t) {
+        if(!stopped) callback();
+      });
     }
 
     this.registerControl = function(name, control) {
@@ -186,6 +172,11 @@
       initFunc = func;
     }
 
+    this.toggle = function() {
+      stopped = !stopped;
+      if(!stopped) loop();
+    }
+
     document.addEventListener('DOMContentLoaded', function(event) {
       init.call(self);
       loop();
@@ -193,5 +184,7 @@
   }
 
   window.app = new App(document.getElementById('clock'));
-
+  document.getElementById('clock').onclick = function() {
+    window.app.toggle();
+  };
 })(document, window);
