@@ -2,7 +2,7 @@
   'use strict';
 
   window.app.init(function(controller) {
-    var transitionTime = 3000;
+    var transitionTime = 6000;
 
     controller.setTransitionActionFactory({
       transitionTime: transitionTime,
@@ -11,22 +11,22 @@
 
     controller.pushAction(
       new NullAction(),
-      5000
+      10000
     );
     controller.pushAction(
       new DigitalClockAction(),
       15000
     );
     controller.pushAction(
-      new FieldLinesAction(10),
-      10000
+      new FieldLinesAction(13),
+      15000
     );
     controller.pushAction(
       new RandomizeAction(),
-      5000
+      8000
     ),
     controller.pushAction(
-      new FieldLinesAction(10),
+      new FieldLinesAction(-13),
       15000
     );
     /*controller.pushAction(
@@ -36,10 +36,12 @@
   });
 
   function SlidingInterpolateAction(transitionTime) {
-    var fromAction, toAction, startTime, endTime;
+    var fromAction, toAction, startTime, endTime, xTime;
 
     function interpolate(from, to, fraction) {
       if(from === null) return null;
+      if(fraction >= 1) return to;
+      if(fraction < 0) return from;
       var diff = to - from;
       return to - (diff - (diff * fraction));
     }
@@ -49,12 +51,19 @@
       toAction = _toAction;
       startTime = _startTime;
       endTime = startTime + transitionTime;
+      xTime = transitionTime / 2 / 24;
     }
 
     this.getPos = function(timestamp, x, y) {
-      var fromPos = fromAction.getPos(startTime, x, y);
-      var toPos = toAction.getPos(endTime, x, y);
-      var fraction = (timestamp-startTime)/transitionTime;
+      // We want the transition to flow from one side of the
+      // clock to the other. Using x as a variable in calculating
+      // start and end time
+      var xStartTime = startTime + (x * xTime),
+          xEndTime = endTime + (transitionTime / 2);
+
+      var fromPos = fromAction.getPos(Math.min(xStartTime, timestamp), x, y);
+      var toPos = toAction.getPos(Math.min(xEndTime, timestamp), x, y);
+      var fraction = (timestamp-xStartTime)/(transitionTime/2);
 
       var pos = {
         hour: interpolate(fromPos.hour, toPos.hour, fraction),
