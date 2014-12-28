@@ -69,7 +69,7 @@
       clocks.push({ x: x, y: y, clock: clock });
     }
 
-    this.tick = function() {
+    this.tick = function(clockDia) {
       var timestamp = new Date().getTime(),
           action = getCurrentAction();
 
@@ -78,7 +78,7 @@
           ? action.getPos(timestamp, c.x, c.y)
           : { hour: 0, minute: 0, second: 0 };
 
-        c.clock.tick(c.currentPos);
+        c.clock.tick(c.currentPos, clockDia, c.x, c.y);
       });
     }
   }
@@ -93,6 +93,10 @@
         width,
         height,
         stopped,
+        clockDia,
+        // TODO: Need to get clocksX and Y into actions for more control
+        clocksX = 24,
+        clocksY = 12,
         controller = new ClockController(),
         scaleFactor = getBackingScale(canvas.getContext('2d'));
 
@@ -103,9 +107,10 @@
     }
 
     function resize() {
-      if(window.innerWidth != width || window.innerHeight != height) {
-        width = window.innerWidth,
-        height = window.innerHeight;
+      if(canvas.offsetWidth != width || canvas.offsetHeight != height) {
+        width = canvas.offsetWidth,
+        height = canvas.offsetHeight;
+        clockDia = width / clocksX * scaleFactor;
 
         canvas.width = width * scaleFactor;
         canvas.height = height * scaleFactor;
@@ -115,19 +120,9 @@
     }
 
     function init() {
-      var clocksX = 24,
-          clocksY = 12,
-          clockDia = 55;
-
       for(var i=0; i<clocksX; i++) {
         for(var j=0; j<clocksY; j++) {
-          controller.addClock(
-            initControl('clock',
-                        i*clockDia,
-                        j*clockDia,
-                        clockDia,
-                        clockDia)
-            , i, j);
+          controller.addClock(initControl('clock'), i, j);
         }
       }
 
@@ -136,17 +131,17 @@
       }
     }
 
-    function initControl(name, x, y, width, height) {
+    function initControl(name) {
       if(!controls.hasOwnProperty(name)) {
         throw "No control '" + name + "' exists.";
       }
 
-      return new controls[name](canvas, x, y, width, height);
+      return new controls[name](canvas);
     }
 
     function loop() {
       resize();
-      controller.tick();
+      controller.tick(clockDia);
       delay(function() {
         loop();
       });
@@ -184,7 +179,9 @@
   }
 
   window.app = new App(document.getElementById('clock'));
+
   document.getElementById('clock').onclick = function() {
     window.app.toggle();
   };
+
 })(document, window);

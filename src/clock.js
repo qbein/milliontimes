@@ -3,18 +3,17 @@
 
   app.registerControl('clock', Clock);
 
-  function Clock(canvas, x, y, width, height) {
-    var r = Math.min(width/2, height/2),
-        pos;
+  function Clock(canvas) {
+    var pos;
 
-    function drawShape(func) {
+    function drawShape(func, r, x, y) {
       var ctx = canvas.getContext('2d');
       ctx.save();
-      func(ctx);
+      func(ctx, r, x, y);
       ctx.restore();
     }
 
-    function getPoint(degree, distanceFromCenter) {
+    function getPoint(degree, distanceFromCenter, r, x, y) {
       // 1 degree is equal to -0,0174532925 (-1 * Math.PI / 180).
       var theta = -0.0174532925 * degree;
 
@@ -24,7 +23,7 @@
       return { x: x - endX + r, y: y - endY + r };
     }
 
-    function drawCenterLine(ctx, endPoint, width, color) {
+    function drawCenterLine(ctx, r, x, y, endPoint, width, color) {
       drawLine(ctx, { x: x+r, y: y+r }, endPoint, width, color);
     }
 
@@ -37,78 +36,79 @@
       ctx.stroke();
     }
 
-    function drawHour(ctx, pos, color) {
+    function drawHour(ctx, r, x, y, pos, color) {
       drawCenterLine(
-        ctx,
-        getPoint(pos, r*0.95),
+        ctx, r, x, y,
+        getPoint(pos, r*0.95, r, x, y),
         r*0.15,
         color);
     }
 
-    function drawMinute(ctx, pos, color) {
+    function drawMinute(ctx, r, x, y, pos, color) {
       drawCenterLine(
-        ctx,
-        getPoint(pos, r*0.95),
+        ctx, r, x, y,
+        getPoint(pos, r*0.95, r, x, y),
         r*0.15,
         color);
     }
 
-    function drawSecond(ctx, pos, color) {
+    function drawSecond(ctx, r, x, y, pos, color) {
       drawLine(
-        ctx,
-        getPoint(pos+180, r*0.25),
-        getPoint(pos, r*0.95),
+        ctx, r, x, y,
+        getPoint(pos+180, r*0.25, r, x, y),
+        getPoint(pos, r*0.95, r, x, y),
         r*0.04,
         color);
     }
 
-    this.tick = function(p) {
-      if(!pos || p.hour != pos.hour || p.minute != pos.minute || p.second != pos.second) {
-        pos = p;
-        draw();
-      }
+    this.tick = function(p, dia, x, y) {
+      pos = p;
+      draw(dia, x, y);
     }
 
-    function draw() {
-      var handColor = '#444',
+    function draw(dia, x, y) {
+      var r = dia / 2,
+          handColor = '#444',
           secHandColor = '#f00',
-          faceColor = '#fff';
+          faceColor = '#fff',
+          x = x*dia,
+          y = y*dia;
 
-      drawShape(function(ctx) {
-        ctx.clearRect(x, y, width, height);
-      });
+      drawShape(function(ctx, r, x, y) {
+        ctx.clearRect(x, y, r*2, r*2);
+      }, r, x, y);
 
       // Draw clock face
-      drawShape(function(ctx) {
+      drawShape(function(ctx, r, x, y) {
         ctx.fillStyle = faceColor;
         ctx.beginPath();
         ctx.arc(x+r, y+r, r, 0, 2 * Math.PI, false);
         ctx.fill();
-      });
+      }, r, x, y);
 
       // Draw hour hand
-      drawShape(function(ctx) {
-        drawHour(ctx, pos.hour, handColor);
-      });
+      drawShape(function(ctx, r, x, y) {
+        drawHour(ctx, r, x, y, pos.hour, handColor);
+      }, r, x, y);
 
       // Draw minute hand
-      drawShape(function(ctx) {
-        drawMinute(ctx, pos.minute, handColor);
-      });
+      drawShape(function(ctx, r, x, y) {
+        drawMinute(ctx, r, x, y, pos.minute, handColor);
+      }, r, x, y);
 
       // Draw hub
-      drawShape(function(ctx) {
+      drawShape(function(ctx, r, x, y) {
         ctx.fillStyle = handColor;
         ctx.beginPath();
         ctx.arc(x+r, y+r, r*0.1, 0, 2 * Math.PI, false);
         ctx.fill();
-      });
+      }, r, x, y);
 
       // Draw second hand
       if(typeof pos.second !== 'undefined' && pos.second !== null) {
-        drawShape(function(ctx) {
-          drawSecond(ctx, pos.second, secHandColor);
-        });
+        drawShape(function(ctx, r, x, y) {
+          drawSecond(ctx, r, x, y, pos.second, secHandColor);
+        }, r, x, y);
       }
     }
   }
