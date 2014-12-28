@@ -3,9 +3,8 @@ An attemt to recreate the amazing [A million Times](http://www.humanssince1982.c
 
 This is a work in progress.
 
-Screenshot:
-![Screenshot](screenshot.png "A somewhat up to date screenshot")
+Working example: <http://qbein.github.io/milliontimes.html>
 
 Inspiration:
-![A million Times](https://lh5.googleusercontent.com/nT_cyFJvpaoh9xtWtmFzCvA_SN3TOsvsAQeMtDA-Z3fAYbbmZpaZUkahEsCV9dEVpSszWg=w2480-h1152 "Image of A million Times installation")
+[A million Times by Humans since 1982](http://www.humanssince1982.com/a-million-times/)
 
