@@ -11,7 +11,7 @@
 
     controller.pushAction(
       new NullAction(),
-      10000
+      6000
     );
     controller.pushAction(
       new DigitalClockAction(),
@@ -29,6 +29,10 @@
       new FieldLinesAction(-13),
       15000
     );
+    controller.pushAction(
+      new NullAction(),
+      10000
+    );
     /*controller.pushAction(
       new AnalogClockAction(),
       3000
@@ -38,12 +42,15 @@
   function SlidingInterpolateAction(transitionTime) {
     var fromAction, toAction, startTime, endTime, xTime;
 
+    function tween(b, a, fraction) {
+    	return b+(a-b)*fraction;
+    }
+    
     function interpolate(from, to, fraction) {
       if(from === null) return null;
       if(fraction >= 1) return to;
       if(fraction < 0) return from;
-      var diff = to - from;
-      return to - (diff - (diff * fraction));
+      return tween(from, to, fraction);
     }
 
     this.initTransition = function(_fromAction, _toAction, _startTime) {
@@ -55,15 +62,13 @@
     }
 
     this.getPos = function(timestamp, x, y) {
-      // We want the transition to flow from one side of the
-      // clock to the other. Using x as a variable in calculating
-      // start and end time
+      // We want the transition to flow from one side of the clock to the
+      // other, hence using x to determine transion start and end times
       var xStartTime = startTime + (x * xTime),
-          xEndTime = endTime + (transitionTime / 2);
-
-      var fromPos = fromAction.getPos(Math.min(xStartTime, timestamp), x, y);
-      var toPos = toAction.getPos(Math.min(xEndTime, timestamp), x, y);
-      var fraction = (timestamp-xStartTime)/(transitionTime/2);
+          xEndTime = xStartTime + transitionTime/2,
+          fraction = (timestamp-xStartTime)/(transitionTime/2),
+          fromPos = fromAction.getPos(Math.min(xStartTime, timestamp), x, y),
+          toPos = toAction.getPos(fraction >= 1 ? timestamp : xEndTime, x, y);
 
       var pos = {
         hour: interpolate(fromPos.hour, toPos.hour, fraction),
