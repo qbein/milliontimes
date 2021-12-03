@@ -1,4 +1,4 @@
-#A Million Times
+# A Million Times
 An attemt to recreate the amazing [A million Times](http://www.humanssince1982.com/amt6096/) installation by *Humans since 1982* in JavaScript using Canvas 2D.
 
 This is a work in progress.
